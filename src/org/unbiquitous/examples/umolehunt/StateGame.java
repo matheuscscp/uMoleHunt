@@ -6,7 +6,7 @@ import org.unbiquitous.ubiengine.util.ComponentContainer;
 
 public class StateGame extends GameState {
 
-  public StateGame(ComponentContainer components, GameStateArgs args) throws NoSuchMethodException {
+  public StateGame(ComponentContainer components, GameStateArgs args) {
     super(components, args);
   }
 
