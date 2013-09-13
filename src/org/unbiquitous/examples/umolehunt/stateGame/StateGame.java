@@ -1,43 +1,41 @@
-package org.unbiquitous.examples.umolehunt;
+package org.unbiquitous.examples.umolehunt.stateGame;
 
-import org.unbiquitous.ubiengine.game.state.GameStateArgs;
 import org.unbiquitous.ubiengine.game.state.GameState;
+import org.unbiquitous.ubiengine.game.state.GameStateArgs;
+import org.unbiquitous.ubiengine.resources.video.Screen;
+import org.unbiquitous.ubiengine.resources.video.texture.Sprite;
 import org.unbiquitous.ubiengine.util.ComponentContainer;
 
 public class StateGame extends GameState {
 
+  public static final class Args extends GameStateArgs {
+    
+  }
+  
+  private Sprite bg;
+  
   public StateGame(ComponentContainer components, GameStateArgs args) {
     super(components, args);
   }
 
-  @Override
   public void init(GameStateArgs args) {
-    // TODO Auto-generated method stub
-    
+    bg = new Sprite(components.get(Screen.class), "img/stateGame/bg.png");
   }
 
-  @Override
   public void close() {
-    // TODO Auto-generated method stub
     
   }
 
-  @Override
   public void input() {
-    // TODO Auto-generated method stub
     
   }
 
-  @Override
   public void update() {
-    // TODO Auto-generated method stub
     
   }
 
-  @Override
   public void render() {
-    // TODO Auto-generated method stub
-    
+    bg.render();
   }
   
 }
