@@ -1,10 +1,10 @@
-package org.unbiquitous.examples.umolehunt.stateWaitingDevices;
+package org.unbiquitous.examples.umolehunt.game.state;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.unbiquitous.examples.umolehunt.stateGame.StateGame;
+import org.unbiquitous.examples.umolehunt.game.PlayerSync;
 import org.unbiquitous.ubiengine.game.state.CommonChange;
 import org.unbiquitous.ubiengine.game.state.GameState;
 import org.unbiquitous.ubiengine.game.state.GameStateArgs;
@@ -24,7 +24,7 @@ public class StateWaitingDevices extends GameState {
   private Sprite bg;
   private Animation waiting;
   private Button start;
-  private List<Player> players = new LinkedList<Player>();
+  private List<PlayerSync> players = new LinkedList<PlayerSync>();
   
   public StateWaitingDevices(ComponentContainer components, GameStateArgs args) {
     super(components, args);
@@ -70,15 +70,15 @@ public class StateWaitingDevices extends GameState {
     start.update();
     
     int total = 0;
-    for (Iterator<Player> it = players.iterator(); it.hasNext(); ++total) {
-      Player p = it.next();
+    for (Iterator<PlayerSync> it = players.iterator(); it.hasNext();) {
+      PlayerSync p = it.next();
       p.update();
-      if (!p.isReady())
-        break;
+      if (p.isReady())
+        total++;
     }
-    if (!start.isEnabled() && total == players.size() && total >= 2)
+    if (!start.isEnabled() && total >= 2)
       start.enable(true);
-    else if (start.isEnabled() && (total < players.size() || total < 2))
+    else if (start.isEnabled() && total < 2)
       start.enable(false);
   }
 
@@ -91,29 +91,30 @@ public class StateWaitingDevices extends GameState {
       start.render();
 
     int i = 0;
-    for (Iterator<Player> it = players.iterator(); it.hasNext(); i += 2) {
-      it.next().render(410, i*35 + 330);
+    for (Iterator<PlayerSync> it = players.iterator(); it.hasNext(); i += 2) {
+      int y = i*22 + 320;
+      if (y >= components.get(Screen.class).getSize().getHeight())
+        break;
+      
+      it.next().render(410, y, 25);
       if (it.hasNext())
-        it.next().render(720, i*35 + 330);
+        it.next().render(720, y, 25);
     }
   }
 
   protected void handleNewKeyboardDevice(KeyboardDevice keyboard_device) {
-    if (players.size() < 10) {
-      players.add(new Player(components, keyboard_device));
-      components.get(KeyboardManager.class).sendRequest(keyboard_device);
-    }
+    players.add(new PlayerSync(components, keyboard_device));
+    components.get(KeyboardManager.class).sendRequest(keyboard_device);
   }
 
   protected void handleKeyboardDeviceDown(KeyboardDevice keyboard_device) {
-    for (Iterator<Player> it = players.iterator(); it.hasNext();) {
+    for (Iterator<PlayerSync> it = players.iterator(); it.hasNext();) {
       if (it.next().getKeyboardDevice() == keyboard_device)
         it.remove();
     }
   }
   
   protected void handleStart(Event event) throws CommonChange {
-    //FIXME
-    throw new CommonChange(null, StateGame.class);
+    throw new CommonChange(new StateGame.Args(players), StateGame.class);
   }
 }

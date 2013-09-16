@@ -1,16 +1,16 @@
-package org.unbiquitous.examples.umolehunt.stateWaitingDevices;
+package org.unbiquitous.examples.umolehunt.game;
 
 import java.awt.Color;
 import java.awt.Font;
 
 import org.unbiquitous.ubiengine.resources.input.keyboard.KeyboardDevice;
-import org.unbiquitous.ubiengine.resources.input.keyboard.KeyboardDevice.KeyEvent;
+import org.unbiquitous.ubiengine.resources.input.keyboard.KeyboardDevice.KeyDownEvent;
 import org.unbiquitous.ubiengine.resources.time.DeltaTime;
 import org.unbiquitous.ubiengine.resources.video.Screen;
 import org.unbiquitous.ubiengine.util.ComponentContainer;
 import org.unbiquitous.ubiengine.util.observer.Event;
 
-public class Player {
+public class PlayerSync {
   private Screen screen;
   private KeyboardDevice keyboard_device;
   private boolean listening;
@@ -18,7 +18,7 @@ public class Player {
   private String nick;
   private DeltaTime deltatime;
   
-  public Player(ComponentContainer components, KeyboardDevice kdev) {
+  public PlayerSync(ComponentContainer components, KeyboardDevice kdev) {
     screen = components.get(Screen.class);
     keyboard_device = kdev;
     listening = false;
@@ -36,7 +36,7 @@ public class Player {
       if (!listening) {
         listening = true;
         try {
-          keyboard_device.connect(KeyboardDevice.KEYDOWN,  this, Player.class.getDeclaredMethod("handleKeyDown", Event.class));
+          keyboard_device.connect(KeyboardDevice.KEYDOWN,  this, PlayerSync.class.getDeclaredMethod("handleKeyDown", Event.class));
         } catch (NoSuchMethodException e) {
         } catch (SecurityException e) {
         }
@@ -51,12 +51,12 @@ public class Player {
     }
   }
 
-  public void render(int x, int y) {
+  public void render(int x, int y, int fsize) {
     Color color;
     
     if (ready) {
       color = new Color(0.0f, 0.5f, 0.0f);
-      screen.renderText(nick, new Font(Font.MONOSPACED, Font.BOLD, 25), color, x, y, false);
+      screen.renderText(x, y, false, 1.0f, nick, new Font(Font.SANS_SERIF, Font.BOLD, fsize), color);
       return;
     }
     
@@ -64,7 +64,7 @@ public class Player {
       color = Color.RED;
     else
       color = Color.BLUE;
-    screen.renderText(nick + ((deltatime.getBegin()/1000)%2 != 0 ? " " : "|"), new Font(Font.MONOSPACED, Font.BOLD, 25), color, x, y, false);
+    screen.renderText(x, y, false, 1.0f, nick + ((deltatime.getBegin()/1000)%2 != 0 ? " " : "|"), new Font(Font.SANS_SERIF, Font.BOLD, fsize), color);
   }
 
   public KeyboardDevice getKeyboardDevice() {
@@ -84,7 +84,7 @@ public class Player {
   }
   
   protected void handleKeyDown(Event event) {
-    int key = ((KeyEvent) event).getUnicodeChar();
+    int key = ((KeyDownEvent) event).getUnicodeChar();
     
     // if ready and (enter or backspace), not ready
     if (ready) {
