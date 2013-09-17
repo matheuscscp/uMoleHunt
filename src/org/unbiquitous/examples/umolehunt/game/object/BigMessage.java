@@ -1,4 +1,4 @@
-package org.unbiquitous.examples.umolehunt.game;
+package org.unbiquitous.examples.umolehunt.game.object;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -34,7 +34,8 @@ public class BigMessage extends GameObject {
     }
     this.message = new Sprite(screen, tmptext);
     pos = new Vector3(640, 200, 0);
-    scale = 0.01f;
+    scale = 0.0f;
+    this.message.rotozoom(0, scale, scale, false);
     scale_speed = 4.0f;
     scale_accel = 1.0f;
     waiting = false;

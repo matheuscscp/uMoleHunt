@@ -1,19 +1,22 @@
-package org.unbiquitous.examples.umolehunt.game;
+package org.unbiquitous.examples.umolehunt.game.object;
 
 import org.unbiquitous.ubiengine.game.GameObject;
 import org.unbiquitous.ubiengine.resources.time.DeltaTime;
 import org.unbiquitous.ubiengine.resources.video.texture.Sprite;
+import org.unbiquitous.ubiengine.resources.video.texture.Text;
 import org.unbiquitous.ubiengine.util.mathematics.linearalgebra.Vector3;
 
 public class FollowerObject extends GameObject {
 
   protected Sprite sprite;
+  protected Text text;
   protected Vector3 target_pos;
   protected boolean center;
   
   public FollowerObject(DeltaTime deltatime) {
     super(deltatime);
     sprite = null;
+    text = null;
     target_pos = new Vector3();
     center = false;
   }
@@ -31,6 +34,8 @@ public class FollowerObject extends GameObject {
   public void render() {
     if (sprite != null)
       sprite.render((int) pos.x(), (int) pos.y(), center);
+    else if (text != null)
+      text.render((int) pos.x(), (int) pos.y(), center);
   }
 
   public Sprite getSprite() {
@@ -41,6 +46,14 @@ public class FollowerObject extends GameObject {
     this.sprite = sprite;
   }
 
+  public Text getText() {
+    return text;
+  }
+
+  public void setText(Text text) {
+    this.text = text;
+  }
+  
   public Vector3 getTargetPos() {
     return target_pos;
   }

@@ -20,6 +20,18 @@ import org.unbiquitous.ubiengine.util.ComponentContainer;
 import org.unbiquitous.ubiengine.util.observer.Event;
 
 public class StateWaitingDevices extends GameState {
+  
+  public static final class Args extends GameStateArgs {
+    private List<PlayerSync> players;
+    
+    public Args(List<PlayerSync> plrs) {
+      players = plrs;
+    }
+    
+    public List<PlayerSync> getPlayers() {
+      return players;
+    }
+  }
 
   private Sprite bg;
   private Animation waiting;
@@ -31,6 +43,9 @@ public class StateWaitingDevices extends GameState {
   }
 
   public void init(GameStateArgs args) {
+    if (args != null)
+      players = ((Args) args).getPlayers();
+    
     components.get(Screen.class).showFPS(true);
     
     bg = new Sprite(components.get(Screen.class), "img/stateWaitingDevices/bg.png");

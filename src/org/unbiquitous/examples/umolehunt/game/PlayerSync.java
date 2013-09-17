@@ -60,7 +60,7 @@ public class PlayerSync {
       return;
     }
     
-    if (nick.indexOf('>') != -1 || nick.indexOf('<') != -1 || nick.length() < 6)
+    if (nick.indexOf('>') != -1 || nick.indexOf('<') != -1 || nick.length() < 4)
       color = Color.RED;
     else
       color = Color.BLUE;
@@ -97,9 +97,9 @@ public class PlayerSync {
       return;
     }
     
-    // if not ready and enter, ready if nick.length() >= 6 and not equals "<nickname>"
+    // if not ready and enter, ready if nick.length() >= 4 and not equals "<nickname>"
     if (key == 10) {
-      if (nick.length() >= 6 && nick.indexOf('>') == -1 && nick.indexOf('<') == -1)
+      if (nick.length() >= 4 && nick.indexOf('>') == -1 && nick.indexOf('<') == -1)
         ready = true;
       return;
     }

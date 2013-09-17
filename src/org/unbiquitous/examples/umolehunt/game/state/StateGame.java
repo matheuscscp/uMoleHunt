@@ -10,11 +10,14 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Random;
 
-import org.unbiquitous.examples.umolehunt.game.BigMessage;
-import org.unbiquitous.examples.umolehunt.game.FollowerObject;
-import org.unbiquitous.examples.umolehunt.game.Player;
 import org.unbiquitous.examples.umolehunt.game.PlayerSync;
-import org.unbiquitous.examples.umolehunt.game.Team;
+import org.unbiquitous.examples.umolehunt.game.object.Arrow;
+import org.unbiquitous.examples.umolehunt.game.object.BigMessage;
+import org.unbiquitous.examples.umolehunt.game.object.FollowerObject;
+import org.unbiquitous.examples.umolehunt.game.object.Player;
+import org.unbiquitous.examples.umolehunt.game.object.Player.PlayerTypedEvent;
+import org.unbiquitous.examples.umolehunt.game.object.Team;
+import org.unbiquitous.examples.umolehunt.game.object.TimeRemaining;
 import org.unbiquitous.ubiengine.game.state.ChangeState;
 import org.unbiquitous.ubiengine.game.state.CommonChange;
 import org.unbiquitous.ubiengine.game.state.GameState;
@@ -27,6 +30,7 @@ import org.unbiquitous.ubiengine.resources.video.texture.Animation;
 import org.unbiquitous.ubiengine.resources.video.texture.Sprite;
 import org.unbiquitous.ubiengine.util.ComponentContainer;
 import org.unbiquitous.ubiengine.util.mathematics.linearalgebra.Vector3;
+import org.unbiquitous.ubiengine.util.observer.Event;
 
 public class StateGame extends GameState {
 
@@ -47,7 +51,8 @@ public class StateGame extends GameState {
   private static final int SHOW_PLAYER = 2;
   private static final int WAIT_MOVE   = 3;
   private static final int SHOW_MOVE   = 4;
-  private static final int ROUND_OVER  = 5;
+  private static final int CHANGE_TEAM = 5;
+  private static final int ROUND_OVER  = 6;
   
   private int state;
   
@@ -64,13 +69,20 @@ public class StateGame extends GameState {
 
   private Team[] team;
   
-  private int round = 0;
+  private int round;
   
   private BigMessage big_message;
   
-  private boolean current_team; // false: team1, true: team2
+  private int current_team; // 0: team1, 1: team2
   
   private FollowerObject marker;
+  
+  private TimeRemaining time_remaining;
+  
+  private boolean player_typed;
+  private int player_typed_char;
+  
+  private Arrow arrow;
   
   public StateGame(ComponentContainer components, GameStateArgs args) {
     super(components, args);
@@ -80,10 +92,7 @@ public class StateGame extends GameState {
     loadWords();
     available_words = new LinkedList<String>();
     
-    //wait_list = ((Args) args).getPlayers(); FIXME
-    components.get(Screen.class).showFPS(true);
-    if (args != null) wait_list = ((Args) args).getPlayers(); else
-    wait_list = new LinkedList<PlayerSync>();
+    wait_list = ((Args) args).getPlayers();
     sync_list = new LinkedList<Player>();
     players = new LinkedList<Player>();
     
@@ -93,9 +102,15 @@ public class StateGame extends GameState {
     
     loadTeams();
     
-    current_team = false;
+    round = 0;
+    
+    current_team = 0;
     
     loadMarker();
+    
+    time_remaining = new TimeRemaining(components);
+    
+    arrow = new Arrow(components);
     
     initSTART_ROUND();
   }
@@ -138,6 +153,7 @@ public class StateGame extends GameState {
     team = new Team[2];
     team[0] = new Team(components);
     team[0].setPos(new Vector3(700, 80, 0));
+    team[0].show();
     team[1] = new Team(components);
     team[1].setPos(new Vector3(1044, 80, 0));
   }
@@ -164,6 +180,8 @@ public class StateGame extends GameState {
   }
 
   public void update() throws ChangeState {
+    checkMinimumAmount();
+    
     // update wait list
     for (PlayerSync p : wait_list)
       p.update();
@@ -173,6 +191,11 @@ public class StateGame extends GameState {
       p.update();
     
     marker.update();
+
+    team[0].update();
+    team[1].update();
+    
+    arrow.update();
     
     switch (state) {
       case START_ROUND: updateSTART_ROUND(); break;
@@ -180,6 +203,7 @@ public class StateGame extends GameState {
       case SHOW_PLAYER: updateSHOW_PLAYER(); break;
       case WAIT_MOVE:   updateWAIT_MOVE();   break;
       case SHOW_MOVE:   updateSHOW_MOVE();   break;
+      case CHANGE_TEAM: updateCHANGE_TEAM(); break;
       case ROUND_OVER:  updateROUND_OVER();  break;
       
       default:
@@ -187,7 +211,13 @@ public class StateGame extends GameState {
     }
   }
 
-  private void updateSTART_ROUND() throws ChangeState {
+  private void checkMinimumAmount() throws CommonChange {
+    // FIXME
+    //if (sync_list.size() + players.size() < 2)
+      //throw new CommonChange(new StateWaitingDevices.Args(wait_list), StateWaitingDevices.class);
+  }
+  
+  private void updateSTART_ROUND() {
     if (big_message != null) {
       big_message.update();
       if (big_message.getScale() == 0.0f)
@@ -224,17 +254,52 @@ public class StateGame extends GameState {
   }
 
   private void updateWAIT_MOVE() {
+    if (player_typed)
+      time_remaining.stop();
     
+    time_remaining.update();
+    
+    if (time_remaining.isTimeUp())
+      initSHOW_MOVE();
   }
 
   private void updateSHOW_MOVE() {
-    
+    if (big_message != null) {
+      big_message.update();
+      if (big_message.getScale() == 0.0f)
+        big_message = null;
+    }
+    else if (!team[current_team].hasWon())
+      initCHANGE_TEAM();
+    else
+      initROUND_OVER();
   }
 
-  private void updateROUND_OVER() {
+  private void updateCHANGE_TEAM() {
+    if (marker.getSpeed().length() >= 0.5f)
+      return;
     
+    for (Player p : players) {
+      if (p.getSpeed().length() >= 0.5f)
+        return;
+    }
+    
+    if (!team[0].isSpeedNull() || !team[1].isSpeedNull())
+      return;
+    
+    initSYNC();
   }
   
+  private void updateROUND_OVER() {
+    if (big_message != null) {
+      big_message.update();
+      if (big_message.getScale() == 0.0f)
+        big_message = null;
+    }
+    else
+      initSTART_ROUND();
+  }
+
   public void render() {
     bg.render();
     
@@ -252,12 +317,15 @@ public class StateGame extends GameState {
     team[0].render();
     team[1].render();
     
+    arrow.render();
+    
     switch (state) {
       case START_ROUND: renderSTART_ROUND(); break;
-      case SYNC:        renderSYNC();       break;
+      case SYNC:        renderSYNC();        break;
       case SHOW_PLAYER: renderSHOW_PLAYER(); break;
       case WAIT_MOVE:   renderWAIT_MOVE();   break;
       case SHOW_MOVE:   renderSHOW_MOVE();   break;
+      case CHANGE_TEAM: renderCHANGE_TEAM(); break;
       case ROUND_OVER:  renderROUND_OVER();  break;
       
       default:
@@ -281,15 +349,21 @@ public class StateGame extends GameState {
   }
 
   private void renderWAIT_MOVE() {
-    
+    time_remaining.render();
   }
 
   private void renderSHOW_MOVE() {
-    
+    if (big_message != null)
+      big_message.render();
+  }
+  
+  private void renderCHANGE_TEAM() {
+    // nothing to be done. just wait objects reach theirs targets
   }
 
   private void renderROUND_OVER() {
-    
+    if (big_message != null)
+      big_message.render();
   }
 
   protected void handleNewKeyboardDevice(KeyboardDevice keyboard_device) {
@@ -305,7 +379,7 @@ public class StateGame extends GameState {
       }
     }
     
-    down_devices.add(keyboard_device);//FIXME
+    down_devices.add(keyboard_device);//FIXME handle down devices rightly
   }
   
   private void initSTART_ROUND() {
@@ -331,7 +405,7 @@ public class StateGame extends GameState {
     state = START_ROUND;
   }
   
-  private void initSYNC() throws CommonChange {
+  private void initSYNC() {
     int i = 0, id = 0;
     for (Iterator<PlayerSync> it = wait_list.iterator(); it.hasNext();) {
       PlayerSync p = it.next();
@@ -345,15 +419,22 @@ public class StateGame extends GameState {
         );
         player.setPos(new Vector3(18.0f, i*25.0f + 170.0f, 0.0f));
         player.setTargetPos(new Vector3(1075.0f, (players.size() + id)*30.0f + 240.0f, 0.0f));
+        
+        try {
+          player.connect(
+            Player.TYPED,
+            this,
+            StateGame.class.getDeclaredMethod("handlePlayerTyped", Event.class)
+          );
+        } catch (NoSuchMethodException e) {
+        } catch (SecurityException e) {
+        }
+        
         sync_list.add(player);
         id++;
       }
       i++;
     }
-    
-    // checking minimum amount of players
-    if (sync_list.size() + players.size() < 2)//FIXME
-      throw new CommonChange(null, StateWaitingDevices.class);
     
     state = SYNC;
   }
@@ -361,22 +442,75 @@ public class StateGame extends GameState {
   private void initSHOW_PLAYER() {
     while (!sync_list.isEmpty())
       players.add(sync_list.remove(0));
+
+    players.get(0).resetChar();
+    player_typed = false;
+    
+    arrow.setTargetPos(players.get(0));
     
     big_message = new BigMessage(components.get(DeltaTime.class), components.get(Screen.class), players.get(0).getNick() + "'s turn");
     
     state = SHOW_PLAYER;
   }
-  
+
   private void initWAIT_MOVE() {
+    time_remaining.start();
     
+    state = WAIT_MOVE;
+  }
+
+  private void initSHOW_MOVE() {
+    if (player_typed)
+      big_message = new BigMessage(components.get(DeltaTime.class), components.get(Screen.class), players.get(0).getNick() + " typed '" + (char) player_typed_char + "'");
+    else
+      big_message = new BigMessage(components.get(DeltaTime.class), components.get(Screen.class), players.get(0).getNick() + " lost his turn");
+    
+    state = SHOW_MOVE;
+  }
+
+  private void initCHANGE_TEAM() {
+    if (current_team == 0)
+      current_team = 1;
+    else
+      current_team = 0;
+    
+    if (current_team == 0) {
+      marker.setTargetPos(new Vector3(616, 74, 0));
+      team[0].show();
+      team[1].hide();
+    }
+    else {
+      marker.setTargetPos(new Vector3(960, 74, 0));
+      team[0].hide();
+      team[1].show();
+    }
+    
+    players.add(players.remove(0));
+    int i = 0;
+    for (Iterator<Player> it = players.iterator(); it.hasNext(); ++i)
+      it.next().setTargetPos(new Vector3(1075.0f, i*30.0f + 240.0f, 0.0f));
+    arrow.setTargetPosByTargetPos(players.get(players.size() - 1));
+    
+    state = CHANGE_TEAM;
+  }
+
+  private void initROUND_OVER() {
+    team[current_team].setPoints(team[current_team].getPoints() + 1);
+    
+    big_message = new BigMessage(components.get(DeltaTime.class), components.get(Screen.class), String.format("Round over. Team %d wins!", current_team + 1));
+    
+    state = ROUND_OVER;
   }
   
-  private void changeCurrentTeam() {
-    current_team = !current_team;
+  protected void handlePlayerTyped(Event event) {
+    int uchar = ((PlayerTypedEvent) event).getTypedChar();
     
-    if (!current_team)
-      marker.setTargetPos(new Vector3(616, 74, 0));
-    else
-      marker.setTargetPos(new Vector3(960, 74, 0));
+    if (!team[current_team].setChar(uchar)) {
+      players.get(0).resetChar();
+      return;
+    }
+    
+    player_typed = true;
+    player_typed_char = uchar;
   }
 }
