@@ -1,8 +1,8 @@
-package org.unbiquitous.examples.umolehunt.game.object;
+package org.unbiquitous.examples.umolehunt.object;
 
-import org.unbiquitous.ubiengine.resources.time.DeltaTime;
-import org.unbiquitous.ubiengine.resources.video.Screen;
-import org.unbiquitous.ubiengine.resources.video.texture.Sprite;
+import org.unbiquitous.ubiengine.engine.Screen;
+import org.unbiquitous.ubiengine.engine.asset.video.texture.Sprite;
+import org.unbiquitous.ubiengine.engine.time.DeltaTime;
 import org.unbiquitous.ubiengine.util.ComponentContainer;
 import org.unbiquitous.ubiengine.util.mathematics.linearalgebra.Vector3;
 

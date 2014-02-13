@@ -1,12 +1,12 @@
-package org.unbiquitous.examples.umolehunt.game;
+package org.unbiquitous.examples.umolehunt.object;
 
 import java.awt.Color;
 import java.awt.Font;
 
-import org.unbiquitous.ubiengine.resources.input.keyboard.KeyboardDevice;
-import org.unbiquitous.ubiengine.resources.input.keyboard.KeyboardDevice.KeyDownEvent;
-import org.unbiquitous.ubiengine.resources.time.DeltaTime;
-import org.unbiquitous.ubiengine.resources.video.Screen;
+import org.unbiquitous.ubiengine.engine.Screen;
+import org.unbiquitous.ubiengine.engine.input.keyboard.KeyboardDevice;
+import org.unbiquitous.ubiengine.engine.input.keyboard.KeyboardDevice.KeyDownEvent;
+import org.unbiquitous.ubiengine.engine.time.DeltaTime;
 import org.unbiquitous.ubiengine.util.ComponentContainer;
 import org.unbiquitous.ubiengine.util.observer.Event;
 

@@ -1,9 +1,9 @@
-package org.unbiquitous.examples.umolehunt.game.object;
+package org.unbiquitous.examples.umolehunt.object;
 
-import org.unbiquitous.ubiengine.game.GameObject;
-import org.unbiquitous.ubiengine.resources.time.DeltaTime;
-import org.unbiquitous.ubiengine.resources.video.texture.Sprite;
-import org.unbiquitous.ubiengine.resources.video.texture.Text;
+import org.unbiquitous.ubiengine.engine.GameObject;
+import org.unbiquitous.ubiengine.engine.asset.video.texture.Sprite;
+import org.unbiquitous.ubiengine.engine.asset.video.texture.Text;
+import org.unbiquitous.ubiengine.engine.time.DeltaTime;
 import org.unbiquitous.ubiengine.util.mathematics.linearalgebra.Vector3;
 
 public class FollowerObject extends GameObject {
